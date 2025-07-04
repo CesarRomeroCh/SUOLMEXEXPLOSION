@@ -47,7 +47,12 @@ with st.sidebar:
 
 @st.cache_data
 def cargar_fichas():
-    excel_file = pd.ExcelFile("FICHAS2.xlsx")
+    from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+EXCEL_PATH = BASE_DIR / "FICHAS2.xlsx"
+excel_file = pd.ExcelFile(EXCEL_PATH)
+
     hojas_deseadas = ['6001', '2066', '2060', '4098', 'PLANTILLAS']
     dataframes = []
     for hoja in hojas_deseadas:
