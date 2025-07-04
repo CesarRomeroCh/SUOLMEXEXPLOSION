@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd 
 import streamlit as st
 from datetime import datetime
 import openpyxl
@@ -6,14 +6,15 @@ from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
 from pathlib import Path
 
+# CONFIGURACIÓN
 st.set_page_config(page_title="Calculadora de Pedido SUOLMEX", layout="wide")
+BASE_DIR = Path(__file__).resolve().parent
+EXCEL_PATH = BASE_DIR / "FICHAS2.xlsx"
 
 # ESTILO
 st.markdown("""
     <style>
-        body {
-            background-color: #f5f7fa;
-        }
+        body { background-color: #f5f7fa; }
         .stApp { font-family: 'Segoe UI', sans-serif; }
         h1, h2, h3 { color: #00264d; }
         .stButton>button {
@@ -34,18 +35,22 @@ st.markdown("""
 
 # SIDEBAR
 with st.sidebar:
-    st.image("logo_suolmex.jpg", width=200)
+    try:
+        st.image("logo_suolmex.jpg", width=200)
+    except:
+        st.warning("Logo no encontrado.")
     st.markdown("### Instrucciones")
     st.markdown("""
-    1. Sube un archivo Excel con el pedido o ingrésalo manualmente.
-    2. Verifica el resumen del pedido.
-    3. Exporta a Excel al finalizar.
-    4. Puedes reiniciar para comenzar de nuevo.
+    1. Sube un archivo Excel con el pedido o ingrésalo manualmente.  
+    2. Verifica el resumen del pedido.  
+    3. Exporta a Excel al finalizar.  
+    4. Puedes reiniciar para comenzar de nuevo.  
     """)
 
+# CARGA DE FICHAS
 @st.cache_data
 def cargar_fichas():
-    excel_file = pd.ExcelFile("FICHAS2.xlsx")
+    excel_file = pd.ExcelFile(EXCEL_PATH)
     hojas_deseadas = ['6001', '2066', '2060', '4098', 'PLANTILLAS']
     dataframes = []
     for hoja in hojas_deseadas:
@@ -62,6 +67,7 @@ def cargar_fichas():
 
 fichas = cargar_fichas()
 
+# SESIÓN INICIAL
 if "pedido_total" not in st.session_state:
     st.session_state["pedido_total"] = []
 if "modelo_actual" not in st.session_state:
@@ -69,6 +75,7 @@ if "modelo_actual" not in st.session_state:
 if "corrida_seleccionada" not in st.session_state:
     st.session_state["corrida_seleccionada"] = None
 
+# SUBIR ARCHIVO DE PEDIDO
 st.subheader("Subir archivo de pedido (opcional)")
 archivo_pedido = st.file_uploader("Selecciona un archivo Excel con el pedido", type=["xlsx"])
 if archivo_pedido:
@@ -79,9 +86,7 @@ if archivo_pedido:
         modelo = str(row["Modelo"]).strip().upper()
         corrida = str(row["Talla"]).strip()
         cantidad = int(row["Cantidad pares"])
-        ficha = fichas[(fichas["Codigo del Producto"] == codigo) &
-                       (fichas["Linea"] == modelo) &
-                       (fichas["Corrida"] == corrida)]
+        ficha = fichas[(fichas["Codigo del Producto"] == codigo) & (fichas["Linea"] == modelo) & (fichas["Corrida"] == corrida)]
         if not ficha.empty:
             ficha = ficha.iloc[0]
             peso_total = ficha['Peso/Pie'] * cantidad * 2
@@ -100,6 +105,7 @@ if archivo_pedido:
                 "Hoja": ficha['Hoja']
             })
 
+# INGRESO MANUAL
 st.markdown("---")
 st.subheader("Ingreso manual")
 codigo = st.selectbox("Código del Producto:", sorted(fichas["Codigo del Producto"].unique()))
@@ -114,11 +120,10 @@ for i, talla in enumerate(sorted(corridas)):
     if cols[i % 5].button(talla):
         st.session_state["corrida_seleccionada"] = talla
 
+# PROCESAR PEDIDO
 if st.session_state["corrida_seleccionada"]:
     corrida = st.session_state["corrida_seleccionada"]
-    ficha = fichas[(fichas["Codigo del Producto"] == codigo) &
-                   (fichas["Linea"] == modelo) &
-                   (fichas["Corrida"] == corrida)]
+    ficha = fichas[(fichas["Codigo del Producto"] == codigo) & (fichas["Linea"] == modelo) & (fichas["Corrida"] == corrida)]
     if not ficha.empty:
         ficha = ficha.iloc[0]
         peso_total = ficha['Peso/Pie'] * cantidad * 2
@@ -139,10 +144,10 @@ if st.session_state["corrida_seleccionada"]:
         st.success(f"Agregado: {modelo} - Talla {corrida} - {cantidad} pares.")
         st.session_state["corrida_seleccionada"] = None
 
+# RESUMEN Y EXPORTACIÓN
 if st.session_state["pedido_total"]:
     st.markdown("---")
     st.subheader("Resumen del Pedido")
-
     for idx, pedido in enumerate(st.session_state["pedido_total"]):
         col1, col2, col3, col4 = st.columns([4, 2, 2, 1])
         with col1:
@@ -154,7 +159,7 @@ if st.session_state["pedido_total"]:
         with col4:
             if st.button("Eliminar", key=f"eliminar_{idx}"):
                 st.session_state["pedido_total"].pop(idx)
-                st.rerun()
+                st.experimental_rerun()
 
     resumen_df = pd.DataFrame(st.session_state["pedido_total"])
     if not resumen_df.empty:
@@ -179,7 +184,7 @@ if st.session_state["pedido_total"]:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Exportar a Excel"):
-                folder = Path("pedidos")
+                folder = BASE_DIR / "pedidos"
                 folder.mkdir(exist_ok=True)
                 fecha = datetime.now().strftime("%Y-%m-%d")
                 codigos = "_".join(sorted(resumen_df["Código"].unique()))
