@@ -34,24 +34,23 @@ st.markdown("""
 
 # SIDEBAR
 with st.sidebar:
-    from pathlib import Path
     logo_path = Path(__file__).parent / "logo_suolmex.jpg"
-    st.image(logo_path, width=200)
+    if logo_path.exists():
+        st.image(logo_path, width=200)
     st.markdown("### Instrucciones")
     st.markdown("""
-    1. Sube un archivo Excel con el pedido o ingrésalo manualmente.
-    2. Verifica el resumen del pedido.
-    3. Exporta a Excel al finalizar.
-    4. Puedes reiniciar para comenzar de nuevo.
+    1. Sube un archivo Excel con el pedido o ingrésalo manualmente.  
+    2. Verifica el resumen del pedido.  
+    3. Exporta a Excel al finalizar.  
+    4. Puedes reiniciar para comenzar de nuevo.  
     """)
 
+# FUNCIÓN PARA CARGAR FICHAS
 @st.cache_data
 def cargar_fichas():
-    from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent
-EXCEL_PATH = BASE_DIR / "FICHAS2.xlsx"
-excel_file = pd.ExcelFile(EXCEL_PATH)
+    BASE_DIR = Path(__file__).resolve().parent
+    EXCEL_PATH = BASE_DIR / "FICHAS2.xlsx"
+    excel_file = pd.ExcelFile(EXCEL_PATH)
 
     hojas_deseadas = ['6001', '2066', '2060', '4098', 'PLANTILLAS']
     dataframes = []
@@ -67,8 +66,10 @@ excel_file = pd.ExcelFile(EXCEL_PATH)
     df["Peso/Pie"] = pd.to_numeric(df["Peso/Pie"], errors="coerce")
     return df.dropna(subset=["Peso/Pie", "Relacion Poliol:ISO"])
 
+# CARGAR FICHAS
 fichas = cargar_fichas()
 
+# ESTADOS INICIALES
 if "pedido_total" not in st.session_state:
     st.session_state["pedido_total"] = []
 if "modelo_actual" not in st.session_state:
@@ -76,6 +77,7 @@ if "modelo_actual" not in st.session_state:
 if "corrida_seleccionada" not in st.session_state:
     st.session_state["corrida_seleccionada"] = None
 
+# SUBIR ARCHIVO DE PEDIDO
 st.subheader("Subir archivo de pedido (opcional)")
 archivo_pedido = st.file_uploader("Selecciona un archivo Excel con el pedido", type=["xlsx"])
 if archivo_pedido:
@@ -86,9 +88,7 @@ if archivo_pedido:
         modelo = str(row["Modelo"]).strip().upper()
         corrida = str(row["Talla"]).strip()
         cantidad = int(row["Cantidad pares"])
-        ficha = fichas[(fichas["Codigo del Producto"] == codigo) &
-                       (fichas["Linea"] == modelo) &
-                       (fichas["Corrida"] == corrida)]
+        ficha = fichas[(fichas["Codigo del Producto"] == codigo) & (fichas["Linea"] == modelo) & (fichas["Corrida"] == corrida)]
         if not ficha.empty:
             ficha = ficha.iloc[0]
             peso_total = ficha['Peso/Pie'] * cantidad * 2
@@ -107,6 +107,7 @@ if archivo_pedido:
                 "Hoja": ficha['Hoja']
             })
 
+# INGRESO MANUAL
 st.markdown("---")
 st.subheader("Ingreso manual")
 codigo = st.selectbox("Código del Producto:", sorted(fichas["Codigo del Producto"].unique()))
@@ -123,9 +124,7 @@ for i, talla in enumerate(sorted(corridas)):
 
 if st.session_state["corrida_seleccionada"]:
     corrida = st.session_state["corrida_seleccionada"]
-    ficha = fichas[(fichas["Codigo del Producto"] == codigo) &
-                   (fichas["Linea"] == modelo) &
-                   (fichas["Corrida"] == corrida)]
+    ficha = fichas[(fichas["Codigo del Producto"] == codigo) & (fichas["Linea"] == modelo) & (fichas["Corrida"] == corrida)]
     if not ficha.empty:
         ficha = ficha.iloc[0]
         peso_total = ficha['Peso/Pie'] * cantidad * 2
@@ -146,10 +145,10 @@ if st.session_state["corrida_seleccionada"]:
         st.success(f"Agregado: {modelo} - Talla {corrida} - {cantidad} pares.")
         st.session_state["corrida_seleccionada"] = None
 
+# RESUMEN Y EXPORTACIÓN
 if st.session_state["pedido_total"]:
     st.markdown("---")
     st.subheader("Resumen del Pedido")
-
     for idx, pedido in enumerate(st.session_state["pedido_total"]):
         col1, col2, col3, col4 = st.columns([4, 2, 2, 1])
         with col1:
@@ -236,4 +235,3 @@ if st.session_state["pedido_total"]:
             if st.button("Reiniciar Pedido"):
                 st.session_state["pedido_total"] = []
                 st.success("Pedido reiniciado.")
-
