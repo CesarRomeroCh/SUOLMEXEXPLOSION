@@ -173,13 +173,19 @@ if st.session_state["pedido_total"]:
         total_poliol = resumen_df["Poliol (g)"].sum() / 1000
         total_iso = resumen_df["ISO (g)"].sum() / 1000
         mezcla_total_kg = total_poliol + total_iso
-        merma_kg = mezcla_total_kg * 0.03
-        mezcla_con_merma = mezcla_total_kg + merma_kg
+
+        # Merma desglosada
+        merma_poliol = total_poliol * 0.03
+        merma_iso = total_iso * 0.03
+        merma_total = merma_poliol + merma_iso
+        mezcla_con_merma = mezcla_total_kg + merma_total
 
         st.markdown(f"**Poliol necesario:** {total_poliol:.2f} kg")
         st.markdown(f"**ISO necesario:** {total_iso:.2f} kg")
         st.markdown(f"**Mezcla sin merma:** {mezcla_total_kg:.2f} kg")
-        st.markdown(f"**Merma (3%):** {merma_kg:.2f} kg")
+        st.markdown(f"**Merma Poliol (3%):** {merma_poliol:.2f} kg")
+        st.markdown(f"**Merma ISO (3%):** {merma_iso:.2f} kg")
+        st.markdown(f"**Merma total:** {merma_total:.2f} kg")
         st.markdown(f"**Mezcla total con merma:** {mezcla_con_merma:.2f} kg")
 
         col1, col2 = st.columns(2)
@@ -217,9 +223,11 @@ if st.session_state["pedido_total"]:
                 ws2["A1"].font = Font(size=14, bold=True)
                 resumen = [
                     ("Total Poliol (kg):", total_poliol),
+                    ("Merma Poliol (3%) (kg):", merma_poliol),
                     ("Total ISO (kg):", total_iso),
+                    ("Merma ISO (3%) (kg):", merma_iso),
                     ("Mezcla sin merma (kg):", mezcla_total_kg),
-                    ("Merma 3% (kg):", merma_kg),
+                    ("Merma total (kg):", merma_total),
                     ("Mezcla total con merma (kg):", mezcla_con_merma),
                     ("Versión del día:", f"{contador if contador > 1 else 1}")
                 ]
