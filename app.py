@@ -42,7 +42,7 @@ st.markdown("""
 
 # Sidebar
 with st.sidebar:
-    st.image(LOGO_PATH, width=200)
+    st.image("logo_suolmex.jpg", width=200)
     st.markdown("### Instrucciones")
     st.markdown("""
     1. Inicia sesión con tu código y contraseña.
