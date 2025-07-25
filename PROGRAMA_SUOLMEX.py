@@ -1,5 +1,5 @@
 # PEDIDOS SUOLMEX CON LOGIN Y GESTIÓN DE USUARIOS
-
+import os
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -192,7 +192,7 @@ st.markdown("---")
 st.title("Generador de Pedido SUOLMEX")
 
 @st.cache_data
-def cargar_fichas():
+def cargar_fichas(mtime: float):
     excel_file = pd.ExcelFile(FICHAS_PATH)
     hojas_deseadas = ['6001', '2066', '2060', '4098', 'PLANTILLAS']
     dataframes = []
@@ -208,7 +208,14 @@ def cargar_fichas():
     df["Peso/Pie"] = pd.to_numeric(df["Peso/Pie"], errors="coerce")
     return df.dropna(subset=["Peso/Pie", "Relacion Poliol:ISO"])
 
-fichas = cargar_fichas()
+# ———— Aquí pones el botón ————
+if st.button("Recargar Excel de fichas"):
+    st.cache_data.clear()
+    st.experimental_rerun()
+
+# ———— Y aquí cargas realmente las fichas ————
+mtime = os.path.getmtime(FICHAS_PATH)
+fichas = cargar_fichas(mtime)
 
 # Estado
 if "pedido_total" not in st.session_state:
