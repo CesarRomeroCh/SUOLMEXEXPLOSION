@@ -208,10 +208,13 @@ def cargar_fichas(mtime: float):
     df["Peso/Pie"] = pd.to_numeric(df["Peso/Pie"], errors="coerce")
     return df.dropna(subset=["Peso/Pie", "Relacion Poliol:ISO"])
 
-# ———— Aquí pones el botón ————
-if st.button("Recargar Excel de fichas"):
+# —— Botón para recargar el Excel en caliente ——
+if st.button("🔄 Recargar Excel de fichas"):
     st.cache_data.clear()
-    st.experimental_rerun()
+    try:
+        st.experimental_rerun()
+    except AttributeError:
+        st.info("El cache se ha limpiado. Por favor pulsa F5 o recarga la página para ver los cambios.")
 
 # ———— Y aquí cargas realmente las fichas ————
 mtime = os.path.getmtime(FICHAS_PATH)
